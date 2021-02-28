@@ -1,0 +1,110 @@
+<script src="model.js"></script>
+<script src="view.js"></script>
+<script src="solver.js"></script>
+<style>
+.sudoku {
+    margin: auto;
+    border: solid medium black;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: xx-large;
+    cursor: default;
+}
+
+.sudoku td {
+    border: solid thin black;
+    width: 80px;
+    height: 80px;
+}
+
+.sudoku td.guessed {
+    color: blue;
+}
+
+.sudoku td.highlighted {
+    background-color: lightblue;
+}
+
+.sudoku td.selected {
+    background-color: lightyellow;
+}
+
+.sudoku .candidate {
+    display: grid;
+    grid-template: 1fr 1fr 1fr / 1fr 1fr 1fr;
+    font-size: medium;
+    color: #bbb;
+}
+
+.sudoku .hl td {
+    border-bottom-width: medium;
+}
+
+.sudoku .vl {
+    border-right-width: medium;
+}
+</style>
+<script>
+const a = new Sudoku("000000000360000920000010070000000204000036500100025730072809300900000080040000000");
+const b = new Sudoku("028709650754003980069000007031097060076300090095004370917456000542938716683172549");
+const c = new Sudoku("000000600002300010010040005100005009200006004070010006003800070000000200600009000");
+const solver = new SudokuSolver(c);
+const view = new SudokuView(c);
+const select = view.select;
+const highlight = view.highlight;
+
+view.oncellclick = e => {
+    if (!e.ctrlKey) {
+        const flag = select.cells.length !== 1 || !select.is(e.r, e.c);
+        select.reset();
+        if (flag) select.on(e.r, e.c);
+    } else {
+        select.toggle(e.r, e.c);
+    }
+    e.stopPropagation();
+};
+
+document.onclick = e => {
+    select.reset();
+};
+
+document.onkeydown = e => {
+    const digit = (e.code.match(/(Digit|Numpad)(\d)/) || [])[2];
+    const arrow = (e.code.match(/Arrow(.*)/) || [])[1];
+    if (digit) {
+        if (!e.ctrlKey) select.cells.forEach(cell => cell.model.guess(digit));
+        else select.cells.forEach(cell => cell.model.removeCandidates(digit));
+        e.preventDefault();
+    } else if (arrow) {
+        if (select.cells.length === 1) {
+            const cell = select.cells[0];
+            let r = cell.model.r;
+            let c = cell.model.c;
+            if (!e.ctrlKey) {
+                switch (arrow) {
+                    case "Up":
+                        if (r > 1) r -= 1;
+                        break;
+                    case "Down":
+                        if (r < 9) r += 1;
+                        break;
+                    case "Left":
+                        if (c > 1) c -= 1;
+                        break;
+                    case "Right":
+                        if (c < 9) c += 1;
+                }
+            } else {
+                // TODO: Jump to unsolved cell
+            }
+            select.reset();
+            select.on(r, c);
+        }
+        e.preventDefault();
+    }
+};
+
+window.onload = () => {
+    document.body.appendChild(view.create());
+};
+</script>
